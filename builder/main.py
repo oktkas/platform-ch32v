@@ -181,10 +181,15 @@ elif upload_protocol == "isp":
 elif upload_protocol == "minichlink":
     # target address can be a hex value of a symbolic name like "flash", "bootloader", "eeprom", "ram", "options"
     flash_start = board_config.get("upload.offset_address", "flash")
+    post_flags = [str(flash_start)] # address
+    # board_upload.verify = yes reads the image back and compares it
+    if str(board_config.get("upload.verify", "no")).lower() in ("yes", "true", "1"):
+        post_flags += ["-v", "$SOURCE", str(flash_start)]
+    post_flags.append("-b") # (re)boot from halt
     env.Replace(
         UPLOADER="minichlink",
         UPLOADERFLAGS="", # write binary
-        UPLOADERPOSTFLAGS="%s -b" % str(flash_start), # address, (re)boot from halt
+        UPLOADERPOSTFLAGS=" ".join(post_flags),
         UPLOADCMD="$UPLOADER $UPLOADERFLAGS -w $SOURCE $UPLOADERPOSTFLAGS",
     )
     upload_target = target_bin
