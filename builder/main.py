@@ -410,6 +410,29 @@ if upload_protocol == "minichlink":
         ], "Disabling Flash Protection", is_minichlink),
         "Disable Flash Protection"
     )
+    # -u power-cycles the target and erases the whole chip, so it reaches a
+    # chip whose firmware remaps SWIO, sleeps or is protected. It keeps the
+    # project's upload_flags (programmer selection) except -H, which would
+    # power-cycle and halt first and fail on such a chip.
+    unbrick_flags = [
+        f for f in env.GetProjectOption("upload_flags", []) if f != "-H"
+    ]
+    env.AddPlatformTarget(
+        "unbrick", None, env.VerboseAction(" ".join(
+            ["\"%s\"" % os.path.join(
+                platform.get_package_dir("tool-minichlink") or "",
+                "minichlink")] + unbrick_flags + ["-u"]),
+            "Unbricking (erasing the whole chip)"),
+        "Unbrick (Erase All)"
+    )
+    # -i prints the chip type, flash size, UUID and read protection; -b lets
+    # the target run again.
+    env.AddPlatformTarget(
+        "chip_info", None, generate_minichlink_action([
+            "-i", "-b"
+        ], "Reading Chip Info", is_minichlink),
+        "Chip Info"
+    )
 
 # Enable WLink options if tool installed or protocol selected.
 if upload_protocol == "wlink" or platform.get_package_dir("tool-wlink") != "":
